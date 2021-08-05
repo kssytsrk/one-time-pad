@@ -5,21 +5,23 @@ import Control.Monad
 import System.IO
 import System.Exit
 import System.Environment
+import Data.Text
+import qualified Data.Text.IO as T
 
 data Options = Options  { optCommand    :: String
                         , optVerbose    :: Bool
-                        , optInput      :: IO String
-                        , optOutput     :: String -> IO ()
-                        , optPad        :: IO String
-                        , optLength     :: Integer
+                        , optInput      :: IO Text
+                        , optOutput     :: Text -> IO ()
+                        , optPad        :: IO Text
+                        , optLength     :: Int
                         }
 
 startOptions :: Options
 startOptions = Options  { optCommand    = "decrypt"
                         , optVerbose    = False
-                        , optInput      = getContents
-                        , optOutput     = putStr
-                        , optPad        = getContents
+                        , optInput      = T.getContents
+                        , optOutput     = T.putStr
+                        , optPad        = T.getContents
                         , optLength     = 0
                         }
 
@@ -39,22 +41,22 @@ options =
         "Generate a one-time pad"
     , Option "i" ["input"]
         (ReqArg
-            (\arg opt -> return opt { optInput = readFile arg })
+            (\arg opt -> return opt { optInput = T.readFile arg })
             "FILE")
         "Input file"
     , Option "o" ["output"]
         (ReqArg
-            (\arg opt -> return opt { optOutput = writeFile arg })
+            (\arg opt -> return opt { optOutput = T.writeFile arg })
             "FILE")
         "Output file"
     , Option "p" ["pad"]
         (ReqArg
-            (\arg opt -> return opt { optPad = readFile arg })
+            (\arg opt -> return opt { optPad = T.readFile arg })
             "FILE")
         "One-time pad to use"
     , Option "l" ["length"]
         (ReqArg
-            (\arg opt -> return opt { optLength = read arg :: Integer })
+            (\arg opt -> return opt { optLength = read arg :: Int })
             "INT")
         "New one-time pad's length"
     , Option "v" ["verbose"]
@@ -83,7 +85,7 @@ main = do
   let (actions, nonOptions, errors) = getOpt RequireOrder options args
 
   -- Here we thread startOptions through all supplied option actions
-  opts <- foldl (>>=) (return startOptions) actions
+  opts <- Prelude.foldl (>>=) (return startOptions) actions
 
   let Options { optCommand = command
               , optVerbose = verbose
@@ -93,7 +95,7 @@ main = do
               , optLength  = length} = opts
 
   case command of
-    "generate" -> output $ generate length
+    "generate" -> generate output length
     "encrypt"  -> do
       inputContents <- input
       padContents <- pad
@@ -102,13 +104,16 @@ main = do
       inputContents <- input
       padContents <- pad
       output $ decrypt inputContents padContents
-    _          -> putStrLn "That's not right"
 
-generate :: Integer -> String
-generate = error "implement generation, please!"
+generate :: (Text -> IO ()) -> Int -> IO ()
+generate output length = do
+  withBinaryFile "/dev/random" ReadMode
+    (\handle -> do
+        contents <- replicateM length $ hGetChar handle
+        output $ pack contents)
 
-encrypt :: String -> String -> String
+encrypt :: Text -> Text -> Text
 encrypt = error "implement encryption, please!"
 
-decrypt :: String -> String -> String
+decrypt :: Text -> Text -> Text
 decrypt = error "implement decryption, please!"
