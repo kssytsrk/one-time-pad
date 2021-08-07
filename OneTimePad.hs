@@ -1,4 +1,4 @@
-module Main (main) where
+module OneTimePad (main) where
 
 import System.Console.GetOpt
 import Control.Monad
@@ -12,7 +12,6 @@ import Data.Time
 import Data.Function (on)
 
 data Options = Options  { optCommand    :: String
-                        , optVerbose    :: Bool
                         , optInput      :: IO T.Text
                         , optOutput     :: T.Text -> IO ()
                         , optPad        :: (IO T.Text, T.Text -> IO ())
@@ -21,7 +20,6 @@ data Options = Options  { optCommand    :: String
 
 startOptions :: Options
 startOptions = Options  { optCommand    = "decrypt"
-                        , optVerbose    = False
                         , optInput      = TI.getContents
                         , optOutput     = TI.putStr
                         , optPad        = (TI.getContents, TI.putStr)
@@ -46,7 +44,7 @@ options =
         (ReqArg
             (\arg opt -> return opt { optInput = TI.readFile arg })
             "FILE")
-        "Input file"
+        "Input file (for decryption and encryption)"
     , Option "o" ["output"]
         (ReqArg
             (\arg opt -> return opt { optOutput = TI.writeFile arg })
@@ -63,10 +61,6 @@ options =
             (\arg opt -> return opt { optLines = read arg :: Int })
             "INT")
         "New one-time pad's length (in lines of 48 characters) (for generation)"
-    , Option "v" ["verbose"]
-        (NoArg
-            (\opt -> return opt { optVerbose = True }))
-        "Enable verbose messages"
     , Option "V" ["version"]
         (NoArg
             (\_ -> do
@@ -79,7 +73,7 @@ options =
                 prg <- getProgName
                 hPutStrLn stderr (usageInfo prg options)
                 exitWith ExitSuccess))
-        "Show help"
+        "Show this help message"
     ]
 
 main :: IO ()
@@ -88,7 +82,6 @@ main = do
   let (actions, nonOptions, errors) = getOpt RequireOrder options args
   opts <- Prelude.foldl (>>=) (return startOptions) actions
   let Options { optCommand = command
-              , optVerbose = verbose
               , optInput   = input
               , optOutput  = output
               , optPad     = (inPad, outPad)
@@ -113,7 +106,7 @@ discard :: Int -> [T.Text] -> T.Text
 discard 0 ts = T.unlines ts
 discard x (t:ts) = if (T.head t == '-' || T.head t == '#')
   then T.unlines [t, (discard x ts)]
-  else T.unlines [(T.append (T.pack "- ") t), (discard (x-1) ts)] -- ???
+  else T.unlines [(T.append (T.pack "- ") t), (discard (x-1) ts)]
 
 clean :: T.Text -> T.Text
 clean = T.map toUpper . T.filter (\c -> let oc = ord c
