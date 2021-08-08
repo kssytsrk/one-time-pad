@@ -142,7 +142,7 @@ unformat :: T.Text -> T.Text
 unformat = T.filter (\c -> c/='\n' && c/=' ')
 
 {- | Generate a one-time pad and write it to file (specified as second
-parameter). Note: this only works on Unix-like systems which have the
+parameter). Note: this only works on operating systems that have the
 "/dev/random" file.
 -}
 generate :: Int -> (T.Text -> IO ()) -> IO ()
