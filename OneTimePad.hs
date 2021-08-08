@@ -159,8 +159,7 @@ generate lines output = do
                         $ map (chr . (65 +) . flip mod 26 . ord) contents
                       ])
 
-{- | Helper function for encryption/decryption.
--}
+-- Helper function for encryption/decryption.
 crypt :: (Int -> Int -> Int) -> T.Text -> T.Text -> T.Text
 crypt f = T.zipWith ((chr .) . f `on` ord)
 
