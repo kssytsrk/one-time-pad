@@ -163,12 +163,10 @@ generate lines output = do
 crypt :: (Int -> Int -> Int) -> T.Text -> T.Text -> T.Text
 crypt f = T.zipWith ((chr .) . f `on` ord)
 
-{- | Encrypt first parameter's contents, using the second parameter as a key.
--}
+-- Encrypt first parameter's contents, using the second parameter as a key.
 encrypt :: T.Text -> T.Text -> T.Text
 encrypt = crypt ((((+65) . flip mod 26 . subtract 130) .) . (+))
 
-{- | Decrypt first parameter's contents, using the second parameter as a key.
--}
+-- Decrypt first parameter's contents, using the second parameter as a key.
 decrypt :: T.Text -> T.Text -> T.Text
 decrypt = crypt ((((+65) . flip mod 26) .) . (-))
